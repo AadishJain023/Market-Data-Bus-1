@@ -1,0 +1,54 @@
+# Build directories
+/build/
+/md-bus/build/
+
+# CMake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# FetchContent build/deps
+/_deps/
+build/_deps/
+
+# Binaries and object files
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dylib
+
+# Visual Studio / IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Temporary
+*~
+*.swp
+
+# Logs
+*.log
+
+# Optional: local config
+*.local
+
+# Ignore generated test / build artifacts inside md-bus
+/md-bus/build/
+/md-bus/build-*/
+
+# Ignore any user secrets or system-specific files
+.env
+.env.local
+
+# Keep README, docs, source files
+!README.md
+!**/*.hpp
+!**/*.cpp
+!CMakeLists.txt
