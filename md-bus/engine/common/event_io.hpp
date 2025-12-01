@@ -82,6 +82,11 @@ inline std::string serialize_event(const Event& e){
 }
 
 //parsing helpers 
+//reconstructing Event from string line
+
+// splits string_view by delim into vector of string_views
+// string_view is a non-owning view (pointer + length) into existing string data,
+// used here to avoid copying substrings.
 
 inline std::vector<std::string_view> split_sv(std::string_view s, char delim) {
     std::vector<std::string_view> out ;
@@ -92,12 +97,14 @@ inline std::vector<std::string_view> split_sv(std::string_view s, char delim) {
             out.emplace_back(s.substr(start));
             break;
         }
+        //pos - start due to substr second arg being length
         out.emplace_back(s.substr(start, pos - start));
         start = pos + 1;
     }
     return out ;
 }
 
+// reconstruct Payload from string_view
 inline Payload parse_payload(std::string_view s) {
     if(s == "-" || s.empty()) return  std::monostate{};
     if(s.rfind("TICK|", 0) == 0) {
