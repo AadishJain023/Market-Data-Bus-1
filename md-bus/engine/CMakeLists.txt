@@ -36,4 +36,12 @@ target_link_libraries(example_check_log
     PRIVATE md-bus-engine   # or whatever your main engine lib target is called
 )
 
+add_executable(example_replay_filters
+    examples/replay_filters.cpp
+)
+
+target_link_libraries(example_replay_filters
+    PRIVATE md-bus-engine  # adjust to your main library target name
+)
+
 add_compile_definitions(BUS_DEBUG)
