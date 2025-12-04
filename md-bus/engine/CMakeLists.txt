@@ -59,5 +59,11 @@ add_executable(example_stateful_strategy
 target_link_libraries(example_stateful_strategy
     PRIVATE md-bus-engine
 )
+add_executable(example_multi_strategy
+    examples/multi_strategy.cpp
+)
 
+target_link_libraries(example_multi_strategy
+    PRIVATE md-bus-engine
+)
 add_compile_definitions(BUS_DEBUG)

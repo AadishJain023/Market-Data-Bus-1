@@ -32,7 +32,7 @@ public :
     TradingThresholdStrategy(md::Account & account, double threshold,
                              int qty, double stop_loss_offset, 
                              double take_profit_offset)
-        :account_{account}, threshold_{threshold}, qty_{qty}, sl_offset_{stop_loss_offset}, tp_level_{take_profit_offset} {}
+        :account_{account}, threshold_{threshold}, qty_{qty}, sl_offset_{stop_loss_offset}, tp_offset_{take_profit_offset} {}
 
     void on_tick(const md::Tick& t, const md::Event& e) override {
         const double pq = t.pq;
