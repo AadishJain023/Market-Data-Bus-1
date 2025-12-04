@@ -52,4 +52,12 @@ target_link_libraries(example_strategy_hello
     PRIVATE md-bus-engine
 )
 
+add_executable(example_stateful_strategy
+    examples/stateful_strategy.cpp
+)
+
+target_link_libraries(example_stateful_strategy
+    PRIVATE md-bus-engine
+)
+
 add_compile_definitions(BUS_DEBUG)
