@@ -35,6 +35,7 @@ private :
     std::size_t sub_ticks_{};
     std::size_t sub_logs_{};
     std::size_t sub_hb_{};
+    std::size_t sub_bar_{};
 
 public :
     StrategyRunner(EventBus& bus, IStrategy& strat)
@@ -64,6 +65,16 @@ public :
         sub_hb_ = bus_.subscribe(Topic::HEARTBEAT,
             [this](const Event& e) {
                 strat_.on_heartbeat(e);
+        });
+
+        sub_bar_ = bus_.subscribe(Topic::BAR_1S, [this](const Event& e){
+            if(!std::holds_alternative<Bar>(e.p)) {
+                log_warn("StrategyRunner: BAR_1S event without Bar payload (seq={})",
+                         e.h.seq);
+                return;
+            }
+            const Bar& b = std::get<Bar>(e.p);
+            strat_.on_bar(b, e);
         });
     }
     ~StrategyRunner() {

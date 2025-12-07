@@ -20,6 +20,11 @@ public :
     virtual void on_heartbeat(const Event& e) {
         (void)e;
     }
+    //NEW: Bar-level callback
+    virtual void on_bar(const Bar& b, const Event& e){
+        (void)b;
+        (void)e;
+    }
 };
 
 }
