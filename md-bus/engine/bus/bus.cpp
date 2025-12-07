@@ -118,10 +118,11 @@ void EventBus::reactor_loop() {
         if(!ingress_->pop(ev)) continue;
         
         ingress_popped_.fetch_add(1, std::memory_order_relaxed);
-
-        auto idx = static_cast<int>(ev.h.topic);
-        if(idx < kMaxTopics) {
-            topic_counts_[idx].fetch_add(1, std::memory_order_relaxed);
+        if(ev.h.ts_ns != 0){
+            auto idx = static_cast<int>(ev.h.topic);
+            if(idx < kMaxTopics) {
+                topic_counts_[idx].fetch_add(1, std::memory_order_relaxed);
+            }
         }
 
 #ifdef BUS_DEBUG
@@ -144,10 +145,11 @@ void EventBus::reactor_loop() {
         ingress_->pop(ev);
 
         ingress_popped_.fetch_add(1, std::memory_order_relaxed);
-
-        auto idx = static_cast<int>(ev.h.topic);
-        if(idx < kMaxTopics){
-            topic_counts_[idx].fetch_add(1, std::memory_order_relaxed);
+        if(ev.h.ts_ns != 0) {
+            auto idx = static_cast<int>(ev.h.topic);
+            if(idx < kMaxTopics){
+                topic_counts_[idx].fetch_add(1, std::memory_order_relaxed);
+            }
         }
 #ifdef BUS_DEBUG
         log_debug("[REACTOR-DRAIN] seq={} topic={}",
@@ -205,6 +207,7 @@ void EventBus::print_stats() const {
     log_info("  topic[MD_TICK]   = {}", load_topic(Topic::MD_TICK));
     log_info("  topic[LOG]       = {}", load_topic(Topic::LOG));
     log_info("  topic[HEARTBEAT] = {}", load_topic(Topic::HEARTBEAT));
+    log_info("  topic[BAR_1S]    = {}", load_topic(Topic::BAR_1S));
 }
 
 }
