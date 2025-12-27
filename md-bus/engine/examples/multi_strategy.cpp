@@ -88,7 +88,7 @@ public :
         (void)e;
     }
 
-    void finalize() {
+    void finalize() override{
         if (account_.has_open_position() && last_pq_ > 0.0) {
             fmt::print("[STRAT] CLOSE OUT at last price pq={}\n", last_pq_);
             account_.close_position(last_pq_,
@@ -165,7 +165,7 @@ public :
     void on_heartbeat(const md::Event& e) override {
         (void)e;
     }
-    void finalize() {
+    void finalize() override {
         if (account_.has_open_position() && last_pq_ > 0.0) {
             fmt::print("[STRAT2] CLOSE OUT at last price pq={}\n", last_pq_);
             account_.close_position(last_pq_,

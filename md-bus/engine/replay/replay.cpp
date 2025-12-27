@@ -82,7 +82,7 @@ void EventReplay::replay_fast(EventBus& bus){
             std::getline(std::cin, dummy);
         }
 
-        bus.publish(e);
+        bus.publish_preserve(e);
         ++events_published_;
         return true;
     });
@@ -153,7 +153,7 @@ void EventReplay::replay_speed(EventBus& bus, double speed){
                 std::getline(std::cin, dummy);
             }
 
-            bus.publish(e);
+            bus.publish_preserve(e);
             ++events_published_;
             continue;
         }
@@ -176,7 +176,7 @@ void EventReplay::replay_speed(EventBus& bus, double speed){
             std::getline(std::cin, dummy);
         }
 
-        bus.publish(e); 
+        bus.publish_preserve(e);
         ++events_published_;
     }
     log_info("EventReplay: timed replay finished");

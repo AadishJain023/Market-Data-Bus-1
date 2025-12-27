@@ -60,6 +60,7 @@ public:
 
     // (non blocking) enqueue in ingress_ and return
     bool publish(Event e);
+    bool publish_preserve(Event e);
     void stop(); // gracefully shutdown
 
     void print_stats() const;

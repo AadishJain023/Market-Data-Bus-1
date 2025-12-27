@@ -82,7 +82,12 @@ public :
             account_.close_position(b.close, e.h.ts_ns, ExitReason::Threshold);
         }
     }
-    void finalize() {
+
+    std::string name() const override {
+        return "BarMomentum";
+    }
+
+    void finalize() override {
         if (account_.has_open_position() && last_ts_ != 0) {
             const Position& pos = account_.position();
             log_info("[BARMOM] FINAL CLOSEOUT sym={} px={} qty={}",

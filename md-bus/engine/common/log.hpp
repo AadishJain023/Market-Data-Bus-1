@@ -4,6 +4,8 @@
 #include <chrono>
 #include <thread>
 #include <utility>
+#include <mutex>
+#include <functional> 
 
 namespace md {
 enum class LogLevel {
@@ -12,6 +14,11 @@ enum class LogLevel {
     Warn,
     Error
 };
+
+inline std::mutex& log_mutex() {
+    static std::mutex m;
+    return m;
+}
 
 inline const char* to_string(LogLevel lvl) {
     switch(lvl){
@@ -55,11 +62,14 @@ inline void log(LogLevel lvl, std::string_view fmt_str, Args&&... args){
     auto ms_since_epoch = duration_cast<milliseconds>(now.time_since_epoch()).count();
 
     auto tid = std::this_thread::get_id();
+    auto tid_hash = static_cast<unsigned long long>(std::hash<std::thread::id>{}(tid));
+
+    std::scoped_lock lk(log_mutex());
 
     fmt::print("[{}] t = {}ms tid = {} ",
                 to_string(lvl),
                 ms_since_epoch,
-                (unsigned long long) std::hash<std::thread::id>{}(tid));
+                tid_hash);
     
     fmt::print(fmt_str, std::forward<Args>(args)...); //... here acts as expanding pack
     fmt::print("\n");

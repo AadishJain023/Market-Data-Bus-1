@@ -14,17 +14,17 @@ class IStrategy {
 public :
     virtual ~IStrategy() = default;
     virtual void on_tick(const Tick& t, const Event& e) = 0;
-    virtual void on_log(const std::string& msg, const Event& e) {
-        (void)msg; (void)e;
-    }
-    virtual void on_heartbeat(const Event& e) {
-        (void)e;
-    }
+    virtual void on_log(const std::string& msg, const Event& e) = 0;
+    virtual void on_heartbeat(const Event& e) = 0;
     //NEW: Bar-level callback
     virtual void on_bar(const Bar& b, const Event& e){
-        (void)b;
-        (void)e;
+        (void)b; (void)e;
     }
+    virtual std::string name() const {
+        return "IStrategy";
+    }
+
+    virtual void finalize() {}
 };
 
 }

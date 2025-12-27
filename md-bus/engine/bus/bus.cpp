@@ -111,6 +111,18 @@ bool EventBus::publish(Event e){
     return ingress_->push(std::move(e));  // remember ingress_ is a pointer;
 }
 
+bool EventBus::publish_preserve(Event e){
+    e.h.seq = seq_.fetch_add(1, std::memory_order_relaxed);
+
+    // IMPORTANT: do not overwrite ts_ns if it's already set
+    if (e.h.ts_ns == 0) {
+        e.h.ts_ns = now_ns();
+    }
+
+    published_.fetch_add(1, std::memory_order_relaxed);
+    return ingress_->push(std::move(e));
+}
+
 // Routes Events to Subscribers with matching topic
 void EventBus::reactor_loop() {
     Event ev;

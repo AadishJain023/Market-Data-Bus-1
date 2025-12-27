@@ -82,4 +82,13 @@ add_executable(example_bar_momentum
 target_link_libraries(example_bar_momentum
     PRIVATE md-bus-engine
 )
+
+add_executable(example_multi_strat_manager
+    examples/multi_strat_manager.cpp
+)
+
+target_link_libraries(example_multi_strat_manager
+    PRIVATE md-bus-engine
+)
+
 add_compile_definitions(BUS_DEBUG)
