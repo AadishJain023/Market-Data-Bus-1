@@ -48,11 +48,6 @@ struct Event {
     Payload p;
 };
 
-inline uint64_t now_ns() {
-    using namespace std::chrono;
-    return (uint64_t)duration_cast<nanoseconds>(steady_clock::now().
-    time_since_epoch()).count();
-}
 
 
 }

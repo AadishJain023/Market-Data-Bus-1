@@ -2,6 +2,7 @@
 #include "../common/event.hpp"
 #include "../common/log.hpp"
 #include <fmt/core.h>
+#include "../common/time.hpp"
 
 
 //this is the feature implementation file for bus.hpp
