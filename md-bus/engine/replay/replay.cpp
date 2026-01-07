@@ -77,7 +77,7 @@ void EventReplay::replay_fast(EventBus& bus){
         }
 
         if(step_mode_) { 
-            fmt::print("[STEP] Press Enter to play next event...\n");
+            md::log_info("[STEP] Press Enter to play next event...\n");
             std::string dummy;
             std::getline(std::cin, dummy);
         }
@@ -148,7 +148,7 @@ void EventReplay::replay_speed(EventBus& bus, double speed){
             wall_start = std::chrono::steady_clock::now();
 
             if (step_mode_) {
-                fmt::print("[STEP] Press Enter to play next event...\n");
+                md::log_info("[STEP] Press Enter to play next event...\n");
                 std::string dummy;
                 std::getline(std::cin, dummy);
             }
@@ -171,7 +171,7 @@ void EventReplay::replay_speed(EventBus& bus, double speed){
         }
 
           if (step_mode_) {
-            fmt::print("[STEP] Press Enter to play next event...\n");
+            md::log_info("[STEP] Press Enter to play next event...\n");
             std::string dummy;
             std::getline(std::cin, dummy);
         }

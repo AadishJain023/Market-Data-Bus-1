@@ -47,7 +47,7 @@ public :
                 sl_level_ = pq + sl_offset_;
                 tp_level_ = pq + tp_offset_;
 
-                    fmt::print("[STRAT] ENTER LONG seq={} sym={} pq={} thr={} qty={} SL={} TP={}\n",
+                    md::log_info("[STRAT] ENTER LONG seq={} sym={} pq={} thr={} qty={} SL={} TP={}\n",
                         e.h.seq, t.symbol, pq, threshold_, qty_, sl_level_, tp_level_);
             }
             return;
@@ -56,14 +56,14 @@ public :
 
         // Stop Loss (assuming sl_offset_ is negative, so sl_level_ < entry_px)
         if(pq <= sl_level_) {
-            fmt::print("[STRAT] STOP LOSS EXIT seq={} sym={} pq={} SL={}\n",
+            md::log_info("[STRAT] STOP LOSS EXIT seq={} sym={} pq={} SL={}\n",
                     e.h.seq, pos.symbol, pq, sl_level_);
             account_.close_position(pq, e.h.ts_ns, md::ExitReason::StopLoss);
             return;
         }
          // Take Profit
         if (pq >= tp_level_) {
-            fmt::print("[STRAT] TAKE PROFIT EXIT seq={} sym={} pq={} TP={}\n",
+            md::log_info("[STRAT] TAKE PROFIT EXIT seq={} sym={} pq={} TP={}\n",
                        e.h.seq, pos.symbol, pq, tp_level_);
             account_.close_position(pq, e.h.ts_ns, md::ExitReason::TakeProfit);
             return;
@@ -71,7 +71,7 @@ public :
 
          // Threshold-based exit: if price has fallen back below threshold
         if (pq < threshold_) {
-            fmt::print("[STRAT] THRESHOLD EXIT seq={} sym={} pq={} thr={}\n",
+            md::log_info("[STRAT] THRESHOLD EXIT seq={} sym={} pq={} thr={}\n",
                        e.h.seq, pos.symbol, pq, threshold_);
             account_.close_position(pq, e.h.ts_ns, md::ExitReason::Threshold);
             return;
@@ -91,7 +91,7 @@ public :
 
     void finalize() override {
         if (account_.has_open_position() && last_pq_ > 0.0) {
-            fmt::print("[STRAT] CLOSE OUT at last price pq={}\n", last_pq_);
+            md::log_info("[STRAT] CLOSE OUT at last price pq={}\n", last_pq_);
             account_.close_position(last_pq_,
                                     last_ts_ns_,
                                     md::ExitReason::CloseOut);

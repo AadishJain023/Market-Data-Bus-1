@@ -6,6 +6,7 @@
 
 #include "../common/event.hpp"
 #include "../common/event_io.hpp"
+#include "../common/log.hpp"
 
 int main (int argc, char ** argv){
     std::string path = "logs/md_events.log";
@@ -14,11 +15,11 @@ int main (int argc, char ** argv){
     }
     std::ifstream in(path);
     if(!in){
-        fmt::print("[CHECK ] failed to open log file '{}'\n", path);
+        md::log_info("[CHECK ] failed to open log file '{}'\n", path);
         return 1;
     }
 
-    fmt::print("[CHECK ] Analysis log file '{}'\n", path);
+    md::log_info("[CHECK ] Analysis log file '{}'\n", path);
 
     std::string line;
     uint64_t line_no         = 0;
@@ -39,7 +40,7 @@ int main (int argc, char ** argv){
         md::Event e;
         if (!md::parse_event(line, e)) {
             ++parse_errors;
-            fmt::print("[CHECK] Parse error at line {}: '{}'\n", line_no, line);
+            md::log_info("[CHECK] Parse error at line {}: '{}'\n", line_no, line);
             continue;
         }
 
@@ -54,7 +55,7 @@ int main (int argc, char ** argv){
         int64_t dt_ns = static_cast<int64_t>(e.h.ts_ns) - static_cast<int64_t>(prev_ts);
         if (dt_ns < 0) {
             ++backwards_count;
-            fmt::print("[CHECK] Timestamp went backwards at line {}: ts={} prev_ts={}\n",
+            md::log_info("[CHECK] Timestamp went backwards at line {}: ts={} prev_ts={}\n",
                        line_no, e.h.ts_ns, prev_ts);
         }
 
@@ -64,16 +65,16 @@ int main (int argc, char ** argv){
         prev_ts = e.h.ts_ns;
     }
 
-    fmt::print("\n[CHECK] Summary for '{}':\n", path);
-    fmt::print("  total_events     = {}\n", total_events);
-    fmt::print("  parse_errors     = {}\n", parse_errors);
-    fmt::print("  backwards_count  = {}\n", backwards_count);
+    md::log_info("\n[CHECK] Summary for '{}':\n", path);
+    md::log_info("  total_events     = {}\n", total_events);
+    md::log_info("  parse_errors     = {}\n", parse_errors);
+    md::log_info("  backwards_count  = {}\n", backwards_count);
 
     if (!first_event && total_events > 1) {
-        fmt::print("  min_dt_ns        = {}\n", (min_dt_ns == std::numeric_limits<int64_t>::max() ? 0 : min_dt_ns));
-        fmt::print("  max_dt_ns        = {}\n", (max_dt_ns == std::numeric_limits<int64_t>::min() ? 0 : max_dt_ns));
+        md::log_info("  min_dt_ns        = {}\n", (min_dt_ns == std::numeric_limits<int64_t>::max() ? 0 : min_dt_ns));
+        md::log_info("  max_dt_ns        = {}\n", (max_dt_ns == std::numeric_limits<int64_t>::min() ? 0 : max_dt_ns));
     } else {
-        fmt::print("  (not enough events for dt stats)\n");
+        md::log_info("  (not enough events for dt stats)\n");
     }
 
     return 0;

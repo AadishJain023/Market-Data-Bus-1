@@ -15,26 +15,26 @@ int main() {
     auto sub_ticks = bus.subscribe(md::Topic::MD_TICK, [](const md::Event e){
         if(std::holds_alternative<md::Tick>(e.p)){
             const auto&t = std::get<md::Tick>(e.p);
-            fmt::print("[Tick] seq = {} sym = {} pq = {}\n",e.h.seq, t.symbol, t.pq);
+            md::log_info("[Tick] seq = {} sym = {} pq = {}\n",e.h.seq, t.symbol, t.pq);
         }
     });
 
     auto sub_logs = bus.subscribe(md::Topic::LOG, [](const md::Event e){
         if(std::holds_alternative<std::string>(e.p)){
             const auto&msg = std::get<std::string>(e.p);
-            fmt::print("[LOG] seq = {} msg = {}\n", e.h.seq, msg);
+            md::log_info("[LOG] seq = {} msg = {}\n", e.h.seq, msg);
         }
     });
 
     auto sub_hb = bus.subscribe(md::Topic::HEARTBEAT, [](const 
     md::Event e){
-        fmt::print("[HB ] seq = {} topic = {}\n",
+        md::log_info("[HB ] seq = {} topic = {}\n",
                e.h.seq,
                static_cast<int>(e.h.topic));
     });
 
     auto sub_all = bus.subscribe_all([](const md::Event e){
-      fmt::print("[MON ] seq = {} topic = {}\n",
+      md::log_info("[MON ] seq = {} topic = {}\n",
                 e.h.seq,
                 static_cast<int>(e.h.topic));
     });

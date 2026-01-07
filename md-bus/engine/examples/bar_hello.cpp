@@ -18,7 +18,7 @@ int main() {
             return;
         }
         const auto& b = std::get<md::Bar>(e.p);
-        fmt::print("[BAR-1S] sym={} o={} h={} l={} c={} v={} start_ts={} end_ts={}\n",
+        md::log_info("[BAR-1S] sym={} o={} h={} l={} c={} v={} start_ts={} end_ts={}\n",
                    b.symbol,
                    b.open,
                    b.high,

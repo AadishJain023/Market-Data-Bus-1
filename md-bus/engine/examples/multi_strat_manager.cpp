@@ -24,7 +24,7 @@ int main() {
     auto sub_bars = bus.subscribe(md::Topic::BAR_1S, [](const md::Event& e){
         if(!std::holds_alternative<md::Bar>(e.p)) return;
         const auto& b = std::get<md::Bar>(e.p);
-        fmt::print("[BAR] sym={} o={} h={} l={} c={} v={}\n",
+        md::log_info("[BAR] sym={} o={} h={} l={} c={} v={}\n",
                    b.symbol, b.open, b.high, b.low, b.close, b.volume);
     });
 
@@ -75,15 +75,15 @@ int main() {
     bus.stop();
     bus.print_stats();
 
-    fmt::print("\n=== BarMomentum Strategy 1 (acct_mom1) ===\n");
+    md::log_info("\n=== BarMomentum Strategy 1 (acct_mom1) ===\n");
     acct_mom1.print_summary();
     acct_mom1.dump_trades_csv("trades_barmomentum_1.csv");
 
-    fmt::print("\n=== BarMomentum Strategy 2 (acct_mom2) ===\n");
+    md::log_info("\n=== BarMomentum Strategy 2 (acct_mom2) ===\n");
     acct_mom2.print_summary();
     acct_mom2.dump_trades_csv("trades_barmomentum_2.csv");
 
-    fmt::print("[INFO] dumped bar-momentum trades to trades_barmomentum_1.csv and trades_barmomentum_2.csv\n");
+    md::log_info("[INFO] dumped bar-momentum trades to trades_barmomentum_1.csv and trades_barmomentum_2.csv\n");
 
     return 0;
 

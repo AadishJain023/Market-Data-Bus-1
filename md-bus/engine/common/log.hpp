@@ -1,5 +1,6 @@
 #pragma once
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <string_view> 
 #include <chrono>
 #include <thread>
@@ -30,11 +31,30 @@ inline const char* to_string(LogLevel lvl) {
     return "UNK"; // unknown
 }
 
-inline LogLevel& global_log_level() {
-    static LogLevel lvl = LogLevel::Debug;
+inline std::atomic<LogLevel>& global_log_level() {
+    static std::atomic<LogLevel> lvl{LogLevel::Debug};
     return lvl;
 }
 
+inline void set_log_level(LogLevel lvl) {
+    global_log_level().store(lvl, std::memory_order_relaxed);
+}
+
+inline LogLevel get_log_level() {
+    return global_log_level().load(std::memory_order_relaxed);
+}
+
+//hash thread id into a stable printable integer
+inline unsigned long long tid_u64() {
+    auto tid = std::this_thread::get_id();
+    return static_cast<unsigned long long>(std::hash<std::thread::id>{}(tid));
+}
+
+inline long long now_ms_since_epoch() {
+    using namespace std::chrono;
+    auto now = system_clock::now();
+    return duration_cast<milliseconds>(now.time_since_epoch()).count();
+}
 
 //the goal is to print a log message with log level and a format string
 //And any number of extra arguments(of anytype)
@@ -53,27 +73,30 @@ inline LogLevel& global_log_level() {
 
 template <typename... Args> //... is to tell Args is pack of types
 inline void log(LogLevel lvl, std::string_view fmt_str, Args&&... args){
-    if(static_cast<int>(lvl) < static_cast<int>(global_log_level())){
+    if(static_cast<int>(lvl) < static_cast<int>(get_log_level())){
         return;
     }
 
-    using namespace std::chrono;
-    auto now = system_clock::now();
-    auto ms_since_epoch = duration_cast<milliseconds>(now.time_since_epoch()).count();
+    const auto ms = now_ms_since_epoch();
+    const auto tid = tid_u64();
 
-    auto tid = std::this_thread::get_id();
-    auto tid_hash = static_cast<unsigned long long>(std::hash<std::thread::id>{}(tid));
+    fmt::memory_buffer buf;
+    fmt::format_to(std::back_inserter(buf),
+                    "[{}] t = {}ms tid = {} ",
+                   to_string(lvl),
+                   ms,
+                   tid);
 
-    std::scoped_lock lk(log_mutex());
-
-    fmt::print("[{}] t = {}ms tid = {} ",
-                to_string(lvl),
-                ms_since_epoch,
-                tid_hash);
+    fmt::format_to(std::back_inserter(buf),
+                    fmt_str,
+                    std::forward<Args>(args)...);
     
-    fmt::print(fmt_str, std::forward<Args>(args)...); //... here acts as expanding pack
-    fmt::print("\n");
+    buf.push_back('\n');
 
+    {
+        std::lock_guard<std::mutex> lk(log_mutex());
+        fmt::print("{}", fmt::to_string(buf));
+    }
 }
 
 // Convenience wrappers 

@@ -19,17 +19,17 @@ public :
     
     void on_tick(const md::Tick& t, const md::Event& e) override {
         if(t.pq > threshold_) {
-            fmt::print("[STRAT] seq={} sym={} pq={} > threshold {}\n",
+            md::log_info("[STRAT] seq={} sym={} pq={} > threshold {}\n",
                        e.h.seq, t.symbol, t.pq, threshold_);
         }
     }
 
     void on_log(const std::string& msg, const md::Event& e) override {
-        fmt::print("[STRAT-LOG] seq={} msg={}\n", e.h.seq, msg);
+        md::log_info("[STRAT-LOG] seq={} msg={}\n", e.h.seq, msg);
     }
 
     void on_heartbeat(const md::Event& e) override {
-        fmt::print("[STRAT-HB] seq={} topic={}\n",
+        md::log_info("[STRAT-HB] seq={} topic={}\n",
                    e.h.seq, static_cast<int>(e.h.topic));
     }
 };

@@ -23,7 +23,7 @@ int main() {
             return ;            
         }
         const auto& b = std::get<md::Bar>(e.p);
-        fmt::print("[BAR-1S] sym={} o={} h={} l={} c={} v={} start_ts={} end_ts={}\n",
+        md::log_info("[BAR-1S] sym={} o={} h={} l={} c={} v={} start_ts={} end_ts={}\n",
                    b.symbol,
                    b.open,
                    b.high,
@@ -70,12 +70,12 @@ int main() {
 
     strat_bar.finalize();
 
-    fmt::print("\n=== BarMomentum Strategy Account Summary ===\n");
+    md::log_info("\n=== BarMomentum Strategy Account Summary ===\n");
     acct_bar.print_summary();
 
     const std::string csv_name = "trades_barmomentum.csv";
     acct_bar.dump_trades_csv(csv_name);
-    fmt::print("[INFO] dumped bar-momentum trades to '{}'\n", csv_name);
+    md::log_info("[INFO] dumped bar-momentum trades to '{}'\n", csv_name);
     return 0;
 }
  

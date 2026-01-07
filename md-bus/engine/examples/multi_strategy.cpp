@@ -46,7 +46,7 @@ public :
                 sl_level_ = pq + sl_offset_;
                 tp_level_ = pq + tp_offset_;
 
-                    fmt::print("[STRAT] ENTER LONG seq={} sym={} pq={} thr={} qty={} SL={} TP={}\n",
+                    md::log_info("[STRAT] ENTER LONG seq={} sym={} pq={} thr={} qty={} SL={} TP={}\n",
                         e.h.seq, t.symbol, pq, threshold_, qty_, sl_level_, tp_level_);
             }
             return;
@@ -55,14 +55,14 @@ public :
 
         // Stop Loss (assuming sl_offset_ is negative, so sl_level_ < entry_pq)
         if(pq <= sl_level_) {
-            fmt::print("[STRAT] STOP LOSS EXIT seq={} sym={} pq={} SL={}\n",
+            md::log_info("[STRAT] STOP LOSS EXIT seq={} sym={} pq={} SL={}\n",
                     e.h.seq, pos.symbol, pq, sl_level_);
             account_.close_position(pq, e.h.ts_ns, md::ExitReason::StopLoss);
             return;
         }
          // Take Profit
         if (pq >= tp_level_) {
-            fmt::print("[STRAT] TAKE PROFIT EXIT seq={} sym={} pq={} TP={}\n",
+            md::log_info("[STRAT] TAKE PROFIT EXIT seq={} sym={} pq={} TP={}\n",
                        e.h.seq, pos.symbol, pq, tp_level_);
             account_.close_position(pq, e.h.ts_ns, md::ExitReason::TakeProfit);
             return;
@@ -70,7 +70,7 @@ public :
 
          // Threshold-based exit: if price has fallen back below threshold
         if (pq < threshold_) {
-            fmt::print("[STRAT] THRESHOLD EXIT seq={} sym={} pq={} thr={}\n",
+            md::log_info("[STRAT] THRESHOLD EXIT seq={} sym={} pq={} thr={}\n",
                        e.h.seq, pos.symbol, pq, threshold_);
             account_.close_position(pq, e.h.ts_ns, md::ExitReason::Threshold);
             return;
@@ -90,7 +90,7 @@ public :
 
     void finalize() override{
         if (account_.has_open_position() && last_pq_ > 0.0) {
-            fmt::print("[STRAT] CLOSE OUT at last price pq={}\n", last_pq_);
+            md::log_info("[STRAT] CLOSE OUT at last price pq={}\n", last_pq_);
             account_.close_position(last_pq_,
                                     last_ts_ns_,
                                     md::ExitReason::CloseOut);
@@ -144,14 +144,14 @@ public :
         if(!account_.has_open_position()) {
             if(diff < -band_) {
                 account_.open_long(t.symbol, qty_, pq, e.h.ts_ns);
-                fmt::print("[STRAT2] ENTER LONG (MR) sym={} pq={} avg={:.2f} diff={:.2f}\n",
+                md::log_info("[STRAT2] ENTER LONG (MR) sym={} pq={} avg={:.2f} diff={:.2f}\n",
                            t.symbol, pq, avg, diff);
             }
             return;
         }
         if(diff >= 0.0) {
             const md::Position& pos = account_.position();
-            fmt::print("[STRAT2] EXIT LONG (MR) sym={} pq={} avg={:.2f} diff={:.2f}\n",
+            md::log_info("[STRAT2] EXIT LONG (MR) sym={} pq={} avg={:.2f} diff={:.2f}\n",
                        pos.symbol, pq, avg, diff);
             account_.close_position(pq, e.h.ts_ns, md::ExitReason::Threshold);
             return ;
@@ -167,7 +167,7 @@ public :
     }
     void finalize() override {
         if (account_.has_open_position() && last_pq_ > 0.0) {
-            fmt::print("[STRAT2] CLOSE OUT at last price pq={}\n", last_pq_);
+        md::log_info("[STRAT2] CLOSE OUT at last price pq={}\n", last_pq_);
             account_.close_position(last_pq_,
                                     last_ts_ns_,
                                     md::ExitReason::CloseOut);
@@ -230,11 +230,11 @@ int main() {
     strat2.finalize();
 
     // Two separate summaries + CSVs
-    fmt::print("\n=== Strategy 1 (Threshold) ===\n");
+    md::log_info("\n=== Strategy 1 (Threshold) ===\n");
     account1.print_summary();
     account1.dump_trades_csv("trades_strat1.csv");
 
-    fmt::print("\n=== Strategy 2 (Mean Reversion) ===\n");
+    md::log_info("\n=== Strategy 2 (Mean Reversion) ===\n");
     account2.print_summary();
     account2.dump_trades_csv("trades_strat2.csv");
 

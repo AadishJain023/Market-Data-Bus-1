@@ -172,12 +172,12 @@ public :
     const std::vector<Trade>& trades() const { return trades_; }
 
     void print_summary() const {
-        fmt::print("\n==== Account Summary ====\n");
-        fmt::print("  starting_cash    = {}\n", starting_cash_);
-        fmt::print("  realized_pnl     = {}\n", realized_pnl_);
-        fmt::print("  equity           = {}\n", equity_);
-        fmt::print("  max_drawdown     = {}\n", max_drawdown_);
-        fmt::print("  trades           = {}\n", trades_.size());
+        md::log_info("\n==== Account Summary ====\n");
+        md::log_info("  starting_cash    = {}\n", starting_cash_);
+        md::log_info("  realized_pnl     = {}\n", realized_pnl_);
+        md::log_info("  equity           = {}\n", equity_);
+        md::log_info("  max_drawdown     = {}\n", max_drawdown_);
+        md::log_info("  trades           = {}\n", trades_.size());
 
         if (!trades_.empty()) {
             int wins = 0;
@@ -204,15 +204,15 @@ public :
             double avg_win  = (wins > 0) ? (sum_win / wins) : 0.0;
             double avg_loss = (losses > 0) ? (sum_loss / losses) : 0.0;
 
-            fmt::print("  wins             = {} ({:.2f}%)\n", wins, win_rate);
-            fmt::print("  losses           = {}\n", losses);
-            fmt::print("  avg_win          = {}\n", avg_win);
-            fmt::print("  avg_loss         = {}\n", avg_loss);
-            fmt::print("  best_trade       = {}\n", (trades_.empty() ? 0.0 : best));
-            fmt::print("  worst_trade      = {}\n", (trades_.empty() ? 0.0 : worst));
+            md::log_info("  wins             = {} ({:.2f}%)\n", wins, win_rate);
+            md::log_info("  losses           = {}\n", losses);
+            md::log_info("  avg_win          = {}\n", avg_win);
+            md::log_info("  avg_loss         = {}\n", avg_loss);
+            md::log_info("  best_trade       = {}\n", (trades_.empty() ? 0.0 : best));
+            md::log_info("  worst_trade      = {}\n", (trades_.empty() ? 0.0 : worst));
         }
 
-        fmt::print("=========================\n");
+        md::log_info("=========================\n");
     }
 
     void dump_trades_csv(const std::string& path) const {
