@@ -33,6 +33,7 @@ struct Header {
     uint64_t seq{0};
     Topic topic{Topic::MD_TICK};
     uint64_t ts_ns{0};
+    uint64_t t_pub_ns{0};
 };
 
 struct Tick {

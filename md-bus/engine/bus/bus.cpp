@@ -15,6 +15,8 @@ EventBus::EventBus(size_t ingress_cap_, size_t per_sub_cap_)
         c.store(0, std::memory_order_relaxed);
     }
 
+    perf_start_ns_ = md::now_ns();
+
     log_info("EventBus starting (ingress_cap = {}, per_sub_cap = {})",
             ingress_cap_, per_sub_cap_);
  
@@ -33,17 +35,47 @@ SubId EventBus::subscribe(Topic T, Callback cb){
     slot->t = T;
     slot->q = std::make_unique<BoundedQueue<Event>>(per_sub_cap_);
     slot->cb = std::move(cb);
-    slot->worker = std::thread([s = slot.get()]{ // s is a lamda capture with c++14 and up (lamda local variable)
+    slot->worker = std::thread([this, s = slot.get()]{ // s is a lamda capture with c++14 and up (lamda local variable)
     // .get() returns a SubSlot* raw pointer
     Event ev;
     while (s->run.load(std::memory_order_relaxed)) {
       if (s->q->pop(ev)) {
+        // Ignore unsubscribe wake-up sentinel
+        if (ev.h.ts_ns == 0 && ev.h.t_pub_ns == 0 && ev.h.seq == 0) {
+            continue;
+        }
+         if (perf_enabled_.load(std::memory_order_relaxed) && ev.h.t_pub_ns != 0) {
+                const uint64_t t_cb_ns = md::now_ns();
+                const uint64_t lat_ns = (t_cb_ns >= ev.h.t_pub_ns) ? (t_cb_ns - ev.h.t_pub_ns) : 0;
+                std::scoped_lock lk(perf_mu_);
+                latency_ns_hist_.record(lat_ns);
+            }
+
+            // OPTIONAL: trace at callback boundary
+            if (reactor_trace_.load(std::memory_order_relaxed)) {
+                md::log_debug("[CB] seq={} topic={}", ev.h.seq, (int)ev.h.topic);
+            }
+
         s->cb(ev); // execute user callback(that was passed during subscribe)
       }
     }
     // optional: drain remaining events before exit
     while (s->q->size() > 0) {
       s->q->pop(ev);
+      // Ignore unsubscribe wake-up sentinel
+      if (ev.h.ts_ns == 0 && ev.h.t_pub_ns == 0 && ev.h.seq == 0) {
+          continue;
+      }
+      if (perf_enabled_.load(std::memory_order_relaxed) &&  ev.h.t_pub_ns != 0) {
+            const uint64_t t_cb_ns = md::now_ns();
+            const uint64_t lat_ns = (t_cb_ns >= ev.h.t_pub_ns) ? (t_cb_ns - ev.h.t_pub_ns) : 0;
+            std::scoped_lock lk(perf_mu_);
+            latency_ns_hist_.record(lat_ns);
+        }
+
+        if (reactor_trace_.load(std::memory_order_relaxed)) {
+            md::log_debug("[CB-DRAIN] seq={} topic={}", ev.h.seq, (int)ev.h.topic);
+        }
       s->cb(ev);
     }
   });
@@ -60,15 +92,43 @@ SubId EventBus::subscribe_all(Callback cb){
     slot->t = Topic::MD_TICK; // irrelevant all msg will be sent
     slot->q = std::make_unique<BoundedQueue<Event>>(per_sub_cap_);
     slot->cb = std::move(cb); // remember to move
-    slot->worker = std::thread([s = slot.get()]{
+    slot->worker = std::thread([this, s = slot.get()]{
         Event ev;
         while(s->run.load(std::memory_order_relaxed)){
             if(s->q->pop(ev)){
+                // Ignore unsubscribe wake-up sentinel
+                if (ev.h.ts_ns == 0 && ev.h.t_pub_ns == 0 && ev.h.seq == 0) {
+                    continue;
+                }
+                if (perf_enabled_.load(std::memory_order_relaxed) && ev.h.t_pub_ns != 0) {
+                const uint64_t t_cb_ns = md::now_ns();
+                const uint64_t lat_ns = (t_cb_ns >= ev.h.t_pub_ns) ? (t_cb_ns - ev.h.t_pub_ns) : 0;
+                std::scoped_lock lk(perf_mu_);
+                latency_ns_hist_.record(lat_ns);
+            }
+
+            if (reactor_trace_.load(std::memory_order_relaxed)) {
+                md::log_debug("[CB-ALL] seq={} topic={}", ev.h.seq, (int)ev.h.topic);
+            }
                 s->cb(ev);
             }
         }
         while(s->q->size() > 0){
             s->q->pop(ev);
+            // Ignore unsubscribe wake-up sentinel
+            if (ev.h.ts_ns == 0 && ev.h.t_pub_ns == 0 && ev.h.seq == 0) {
+                continue;
+            }
+            if (perf_enabled_.load(std::memory_order_relaxed) && ev.h.t_pub_ns != 0) {
+            const uint64_t t_cb_ns = md::now_ns();
+            const uint64_t lat_ns = (t_cb_ns >= ev.h.t_pub_ns) ? (t_cb_ns - ev.h.t_pub_ns) : 0;
+            std::scoped_lock lk(perf_mu_);
+            latency_ns_hist_.record(lat_ns);
+            }
+
+            if (reactor_trace_.load(std::memory_order_relaxed)) {
+                md::log_debug("[CB-ALL-DRAIN] seq={} topic={}", ev.h.seq, (int)ev.h.topic);
+            }
             s->cb(ev);
         }
     });
@@ -108,6 +168,10 @@ bool EventBus::publish(Event e){
     e.h.ts_ns = now_ns();
 
     published_.fetch_add(1, std::memory_order_relaxed);
+    // inside publish(...)
+    if (perf_enabled_.load(std::memory_order_relaxed)) {
+        e.h.t_pub_ns = md::now_ns();
+    }
 
     return ingress_->push(std::move(e));  // remember ingress_ is a pointer;
 }
@@ -119,7 +183,7 @@ bool EventBus::publish_preserve(Event e){
     if (e.h.ts_ns == 0) {
         e.h.ts_ns = now_ns();
     }
-
+    if (e.h.t_pub_ns == 0) e.h.t_pub_ns = e.h.ts_ns;
     published_.fetch_add(1, std::memory_order_relaxed);
     return ingress_->push(std::move(e));
 }
@@ -129,6 +193,12 @@ void EventBus::reactor_loop() {
     Event ev;
     while(run_.load(std::memory_order_relaxed)){
         if(!ingress_->pop(ev)) continue;
+
+          if (reactor_trace_.load(std::memory_order_relaxed)) {
+            md::log_debug("[REACTOR] seq={} topic={}", ev.h.seq, (int)ev.h.topic);
+            // If you changed Event to have ev.seq/ev.topic, then use:
+            // md::log_debug("[REACTOR] seq={} topic={}", ev.seq, (int)ev.topic);
+        }
         
         ingress_popped_.fetch_add(1, std::memory_order_relaxed);
         if(ev.h.ts_ns != 0){
@@ -137,12 +207,6 @@ void EventBus::reactor_loop() {
                 topic_counts_[idx].fetch_add(1, std::memory_order_relaxed);
             }
         }
-
-#ifdef BUS_DEBUG
-        log_debug("[REACTOR] seq = {} topic = {}",
-        ev.h.seq,
-        static_cast<int>(ev.h.topic));
-#endif
 
         std::scoped_lock lk(mu_);
         for(auto &kv : subs_){
@@ -204,6 +268,10 @@ void EventBus::stop(){
         for(auto &kv : all_subs_) ids.push_back(kv.first);
     }
     for(auto id : ids) unsubscribe(id);
+
+    if (perf_enabled_.load(std::memory_order_relaxed)) {
+        perf_end_ns_ = md::now_ns();
+    }
 }
 
 void EventBus::print_stats() const {
@@ -221,6 +289,40 @@ void EventBus::print_stats() const {
     log_info("  topic[LOG]       = {}", load_topic(Topic::LOG));
     log_info("  topic[HEARTBEAT] = {}", load_topic(Topic::HEARTBEAT));
     log_info("  topic[BAR_1S]    = {}", load_topic(Topic::BAR_1S));
+
+    auto p = perf_snapshot();
+    md::log_info("Perf:");
+    md::log_info("  duration_ns  = {}", p.duration_ns);
+    md::log_info("  events       = {}", p.events);
+    md::log_info("  events/sec   = {}", p.eps);
+    md::log_info("  latency(ns)  min={} avg={} p50~{} p95~{} p99~{} max={}",
+                p.lat_min, p.lat_avg, p.lat_p50, p.lat_p95, p.lat_p99, p.lat_max);
+
+}
+
+PerfSnapshot EventBus::perf_snapshot() const {
+    PerfSnapshot s;
+
+    const uint64_t start = perf_start_ns_;
+    const uint64_t end   = perf_end_ns_ ? perf_end_ns_ : md::now_ns();
+
+    std::scoped_lock lk(perf_mu_);
+
+    s.events = latency_ns_hist_.n;
+    s.duration_ns = (end >= start) ? (end - start) : 0;
+    if (s.duration_ns > 0) {
+        long double eps_ld = (long double)s.events * 1e9L / (long double)s.duration_ns;
+        s.eps = (uint64_t)eps_ld;
+    }
+
+    s.lat_min = (latency_ns_hist_.n ? latency_ns_hist_.min_v : 0);
+    s.lat_avg = latency_ns_hist_.avg();
+    s.lat_p50 = latency_ns_hist_.percentile(0.50);
+    s.lat_p95 = latency_ns_hist_.percentile(0.95);
+    s.lat_p99 = latency_ns_hist_.percentile(0.99);
+    s.lat_max = latency_ns_hist_.max_v;
+
+    return s;
 }
 
 }

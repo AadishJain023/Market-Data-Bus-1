@@ -11,6 +11,8 @@
 int main() {
     using namespace std::chrono_literals;
     md::EventBus bus(1024, 1024);
+    bus.set_perf_enabled(true);
+    bus.set_reactor_trace(false); 
     md::BarBuilder bar_builder(bus, md::BarBuilder::NS_PER_SEC);
 
     auto subs_bar = bus.subscribe(md::Topic::BAR_1S, [](const md::Event& e){

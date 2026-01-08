@@ -4,11 +4,14 @@
 #include<memory>
 #include<string>
 #include<thread>
+#include <mutex>
 #include<unordered_map>
 #include<vector>
 
 #include "../common/bounded_queue.hpp"
 #include "../common/event.hpp"
+#include "../common/metrics.hpp"
+
 
 namespace md {
 
@@ -48,6 +51,15 @@ private:
     std::array<std::atomic<uint64_t>, kMaxTopics> topic_counts_{0}; // array to keep 
     //track of the topic counts
 
+    std::atomic<bool> perf_enabled_{true};
+    std::atomic<bool> reactor_trace_{false};
+
+    uint64_t perf_start_ns_ = 0;
+    uint64_t perf_end_ns_   = 0;
+
+    mutable std::mutex perf_mu_;
+    Log2Histogram<48> latency_ns_hist_;
+
 public:
     explicit EventBus(size_t ingress_cap = 65536, size_t per_sub_cap = 65536);
 
@@ -65,7 +77,11 @@ public:
 
     void print_stats() const;
 
+    PerfSnapshot perf_snapshot() const;
 
+    void set_perf_enabled(bool on) {perf_enabled_.store(on, std::memory_order_relaxed);}
+    
+    void set_reactor_trace(bool on) {reactor_trace_.store(on, std::memory_order_relaxed);}
 
 };
 }
