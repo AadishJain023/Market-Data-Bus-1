@@ -15,6 +15,11 @@ inline std::string to_string(Topic t){
         case Topic::HEARTBEAT : return "HEARTBEAT";
         case Topic::BAR_1S : return "BAR_1S";
         case Topic::BAR_1M : return "BAR_1M";
+        case Topic::TRADE : return "TRADE";
+        case Topic::ORDER : return "ORDER";
+        case Topic::REJECT : return "REJECT";
+        case Topic::BOOK_UPDATE : return "BOOK_UPDATE";
+        case Topic::RISK_ALERT : return "RISK_ALERT";   
     }
     return "UNKNOWN";
 }
@@ -26,6 +31,11 @@ inline bool topic_from_string(std::string_view s, Topic& out){
     if(s == "HEARTBEAT") {out = Topic::HEARTBEAT; return true;}
     if(s == "BAR_1S") {out = Topic::BAR_1S; return true;}
     if(s == "BAR_1M") {out = Topic::BAR_1M; return true;}
+    if(s == "TRADE") {out = Topic::TRADE; return true;}
+    if(s == "ORDER") {out = Topic::ORDER; return true;} 
+    if(s == "REJECT") {out = Topic::REJECT; return true;}
+    if(s == "BOOK_UPDATE") {out = Topic::BOOK_UPDATE; return true;}
+    if(s == "RISK_ALERT") {out = Topic::RISK_ALERT; return true;}
     return false;
 }
 

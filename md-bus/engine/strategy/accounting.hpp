@@ -12,15 +12,15 @@
 
 namespace md {
 
-enum class Side {
+enum class PosSide {
     Long,
     Short,
 };
 
-inline const char* to_string(Side s) {
+inline const char* to_string(PosSide s) {
     switch (s) {
-        case Side::Long : return "LONG";
-        case Side::Short : return "SHORT";
+        case PosSide::Long : return "LONG";
+        case PosSide::Short : return "SHORT";
     }
     return "UNKNOWN";
 }
@@ -45,9 +45,9 @@ inline const char* to_string(ExitReason r){
 }
 
 //keeping track
-struct Trade {
+struct AccountTrade {
     std::string symbol;
-    Side side = Side::Long;
+    PosSide side = PosSide::Long;
     int qty = 0;
 
     double entry_price = 0.0;
@@ -63,7 +63,7 @@ struct Trade {
 struct Position {
     std::string symbol;
     bool open = false;
-    Side side = Side::Long;
+    PosSide side = PosSide::Long;
     int qty = 0;
     double entry_pq = 0.0;
     uint64_t entry_ts_ns = 0;
@@ -78,7 +78,7 @@ private :
     double max_drawdown_{0.0};
 
     Position pos_{};
-    std::vector<Trade> trades_;
+    std::vector<AccountTrade> trades_;
 public :
     explicit Account(double starting_cash = 0.0)
         :starting_cash_{starting_cash},
@@ -97,7 +97,7 @@ public :
             return;
         }
         pos_.open = true;
-        pos_.side        = Side::Long;
+        pos_.side        = PosSide::Long;
         pos_.symbol      = symbol;
         pos_.qty         = qty;
         pos_.entry_pq    = pq;
@@ -112,10 +112,10 @@ public :
             return;
         }
 
-        double signed_qty = static_cast<double>(pos_.qty) * (pos_.side == Side::Long ? 1.0 : -1.0);
+        double signed_qty = static_cast<double>(pos_.qty) * (pos_.side == PosSide::Long ? 1.0 : -1.0);
         double trade_pnl = signed_qty * (pq - pos_.entry_pq);
 
-        Trade tr;
+        AccountTrade tr;
         tr.symbol      = pos_.symbol;
         tr.side        = pos_.side;
         tr.qty         = pos_.qty;
@@ -149,7 +149,7 @@ public :
     double unrealized_pnl(double last_pq) const {
         if (!pos_.open) return 0.0;
         double signed_qty = static_cast<double>(pos_.qty) *
-                            (pos_.side == Side::Long ? 1.0 : -1.0);
+                            (pos_.side == PosSide::Long ? 1.0 : -1.0);
         return (last_pq - pos_.entry_pq) * signed_qty;
     }
 
@@ -169,7 +169,7 @@ public :
     double equity() const {return equity_;}
     double max_drawdown() const {return max_drawdown_;}
 
-    const std::vector<Trade>& trades() const { return trades_; }
+    const std::vector<AccountTrade>& trades() const { return trades_; }
 
     void print_summary() const {
         md::log_info("\n==== Account Summary ====\n");
