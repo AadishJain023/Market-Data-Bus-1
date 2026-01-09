@@ -194,6 +194,10 @@ void EventBus::reactor_loop() {
     while(run_.load(std::memory_order_relaxed)){
         if(!ingress_->pop(ev)) continue;
 
+        if (ev.h.ts_ns == 0 && ev.h.t_pub_ns == 0 && ev.h.seq == 0) {
+            continue;
+        }
+
           if (reactor_trace_.load(std::memory_order_relaxed)) {
             md::log_debug("[REACTOR] seq={} topic={}", ev.h.seq, (int)ev.h.topic);
             // If you changed Event to have ev.seq/ev.topic, then use:
@@ -220,6 +224,10 @@ void EventBus::reactor_loop() {
     }
     while(ingress_->size() > 0){
         ingress_->pop(ev);
+
+        if (ev.h.ts_ns == 0 && ev.h.t_pub_ns == 0 && ev.h.seq == 0) {
+            continue;
+        }
 
         ingress_popped_.fetch_add(1, std::memory_order_relaxed);
         if(ev.h.ts_ns != 0) {
