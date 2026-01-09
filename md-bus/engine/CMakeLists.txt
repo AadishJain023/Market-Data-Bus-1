@@ -91,4 +91,8 @@ target_link_libraries(example_multi_strat_manager
     PRIVATE md-bus-engine
 )
 
+add_executable(example_order_flow examples/order_flow_demo.cpp)
+target_link_libraries(example_order_flow PRIVATE md-bus-engine fmt::fmt)
+target_include_directories(example_order_flow PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_compile_definitions(BUS_DEBUG)
